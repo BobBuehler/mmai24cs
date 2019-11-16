@@ -14,15 +14,13 @@ namespace Joueur.cs.Games.Necrowar
                 return;
             }
 
-            var goals = new HashSet<Tile>(targets);
-
-            var astar = new AStar<Tile>(unit.Tile.ToEnumerable(), t => goals.Contains(t), (t1, t2) => 1, t => 0, t => t.GetNeighbors().Where(n => n.IsPath));
-            var steps = astar.Path.Skip(1).ToList();
+            var steps = FindPath(unit.Tile.ToEnumerable(), targets, t => t.IsPath);
+            steps.RemoveFirst();
 
             while (unit.Moves > 0 && steps.Count > 0)
             {
-                unit.Move(steps[0]);
-                steps.RemoveAt(0);
+                unit.Move(steps.First());
+                steps.RemoveFirst();
             }
         }
 
@@ -39,6 +37,13 @@ namespace Joueur.cs.Games.Necrowar
         public static bool CanAfford(Player player, UnitJob job)
         {
             return player.Gold >= job.GoldCost && player.Mana >= job.ManaCost;
+        }
+
+        public static LinkedList<Tile> FindPath(IEnumerable<Tile> starts, IEnumerable<Tile> goals, Func<Tile, bool> isPathable)
+        {
+            var goalSet = new HashSet<Tile>(goals);
+            var astar = new AStar<Tile>(starts, t => goalSet.Contains(t), (t1, t2) => 1, t => 0, t => t.GetNeighbors().Where(isPathable));
+            return astar.Path;
         }
     }
 }
