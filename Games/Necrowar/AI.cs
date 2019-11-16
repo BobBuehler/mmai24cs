@@ -26,14 +26,19 @@ namespace Joueur.cs.Games.Necrowar
         /// This is your AI's player. It contains all the information about your player's state.
         /// </summary>
         public readonly Player Player;
-        #pragma warning restore 0169
-        #pragma warning restore 0649
+#pragma warning restore 0169
+#pragma warning restore 0649
 
         // <<-- Creer-Merge: properties -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         // you can add additional properties here for your AI to use
         // <<-- /Creer-Merge: properties -->>
         #endregion
 
+        public static Game GAME;
+        public static Player US;
+        public static Player THEM;
+
+        public static TowerJob CASTLE;
 
         #region Methods
         /// <summary>
@@ -57,6 +62,12 @@ namespace Joueur.cs.Games.Necrowar
         {
             // <<-- Creer-Merge: start -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
             base.Start();
+
+            AI.GAME = this.Game;
+            AI.US = this.Player;
+            AI.THEM = this.Game.Players.First(p => p != AI.US);
+
+            AI.CASTLE = this.Game.TowerJobs.First(t => t.Title == "castle");
             // <<-- /Creer-Merge: start -->>
         }
 
