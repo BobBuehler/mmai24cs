@@ -58,8 +58,9 @@ namespace Joueur.cs.Games.Necrowar
         public static Tower OUR_CASTLE;
         public static Tower THEIR_CASTLE;
 
-        static Dictionary<Tile, List<Tower>> towerRanges = new Dictionary<Tile, List<Tower>>();
+        public static IEnumerable<Tile> GOLD_MINES;
 
+        static Dictionary<Tile, List<Tower>> towerRanges = new Dictionary<Tile, List<Tower>>();
         #region Methods
         /// <summary>
         /// This returns your AI's name to the game server. Just replace the string.
@@ -107,6 +108,8 @@ namespace Joueur.cs.Games.Necrowar
             AI.OUR_CASTLE = AI.US.Towers.First(t => t.Job == AI.CASTLE);
             AI.THEIR_CASTLE = AI.THEM.Towers.First(t => t.Job == AI.CASTLE);
 
+            AI.GOLD_MINES = AI.GAME.Tiles.Where(t => t.IsGoldMine && t.Owner == AI.US);
+
             // <<-- /Creer-Merge: start -->>
         }
 
@@ -150,6 +153,14 @@ namespace Joueur.cs.Games.Necrowar
 
             //Update list of towers within range of each path tile
             Solver.updateTowerRanges(AI.THEM, towerRanges);
+
+            if (AI.GAME.Units.Where(u => u.Job == WORKER).Count() < AI.GOLD_MINES.Count())
+            {
+                if (Solver.CanAfford(AI.US, AI.WORKER))
+                {
+                    AI.WORKER_SPAWNER.SpawnWorker();
+                }
+            }
 
             if (Solver.CanAfford(AI.US, AI.HOUND))
             {
