@@ -39,6 +39,18 @@ namespace Joueur.cs.Games.Necrowar
         public static Player THEM;
 
         public static TowerJob CASTLE;
+        public static TowerJob CLEANSING;
+        public static TowerJob BALLISTA;
+        public static TowerJob ARROW;
+        public static TowerJob AOE;
+
+        public static UnitJob WORKER;
+        public static UnitJob ZOMBIE;
+        public static UnitJob GHOUL;
+        public static UnitJob HOUND;
+        public static UnitJob ABOMINATION;
+        public static UnitJob WRAITH;
+        public static UnitJob HORSEMAN;
 
         #region Methods
         /// <summary>
@@ -68,6 +80,19 @@ namespace Joueur.cs.Games.Necrowar
             AI.THEM = this.Game.Players.First(p => p != AI.US);
 
             AI.CASTLE = this.Game.TowerJobs.First(t => t.Title == "castle");
+            AI.CLEANSING = this.Game.TowerJobs.First(t => t.Title == "cleansing");
+            AI.BALLISTA = this.Game.TowerJobs.First(t => t.Title == "ballista");
+            AI.ARROW = this.Game.TowerJobs.First(t => t.Title == "arrow");
+            AI.AOE = this.Game.TowerJobs.First(t => t.Title == "aoe");
+
+            AI.WORKER = this.Game.UnitJobs.First(t => t.Title == "worker");
+            AI.ZOMBIE = this.Game.UnitJobs.First(t => t.Title == "zombie");
+            AI.GHOUL = this.Game.UnitJobs.First(t => t.Title == "ghoul");
+            AI.HOUND = this.Game.UnitJobs.First(t => t.Title == "hound");
+            AI.ABOMINATION = this.Game.UnitJobs.First(t => t.Title == "abomination");
+            AI.WRAITH = this.Game.UnitJobs.First(t => t.Title == "wraith");
+            AI.HORSEMAN = this.Game.UnitJobs.First(t => t.Title == "horseman");
+
             // <<-- /Creer-Merge: start -->>
         }
 
