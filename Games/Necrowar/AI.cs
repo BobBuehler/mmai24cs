@@ -38,6 +38,9 @@ namespace Joueur.cs.Games.Necrowar
         public static Player US;
         public static Player THEM;
 
+        public static Tile UNIT_SPAWNER;
+        public static Tile WORKER_SPAWNER;
+
         public static TowerJob CASTLE;
         public static TowerJob CLEANSING;
         public static TowerJob BALLISTA;
@@ -51,6 +54,9 @@ namespace Joueur.cs.Games.Necrowar
         public static UnitJob ABOMINATION;
         public static UnitJob WRAITH;
         public static UnitJob HORSEMAN;
+
+        public static Tower OUR_CASTLE;
+        public static Tower THEIR_CASTLE;
 
         #region Methods
         /// <summary>
@@ -93,6 +99,12 @@ namespace Joueur.cs.Games.Necrowar
             AI.WRAITH = this.Game.UnitJobs.First(t => t.Title == "wraith");
             AI.HORSEMAN = this.Game.UnitJobs.First(t => t.Title == "horseman");
 
+            AI.UNIT_SPAWNER = this.Game.Tiles.First(t => t.IsUnitSpawn && t.Owner == AI.US);
+            AI.WORKER_SPAWNER = this.Game.Tiles.First(t => t.IsWorkerSpawn && t.Owner == AI.US);
+
+            AI.OUR_CASTLE = AI.US.Towers.First(t => t.Job == AI.CASTLE);
+            AI.THEIR_CASTLE = AI.THEM.Towers.First(t => t.Job == AI.CASTLE);
+
             // <<-- /Creer-Merge: start -->>
         }
 
@@ -133,6 +145,18 @@ namespace Joueur.cs.Games.Necrowar
         {
             // <<-- Creer-Merge: runTurn -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
             // Put your game logic here for runTurn
+
+            if (Solver.CanAfford(AI.US, AI.HOUND))
+            {
+                AI.UNIT_SPAWNER.SpawnUnit(AI.HOUND.Title);
+            }
+
+            foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
+            {
+                Solver.MoveAttacker(unit, AI.THEIR_CASTLE.Tile.GetNeighbors());
+                Solver.Attack(unit, AI.THEIR_CASTLE);
+            }
+
             return true;
             // <<-- /Creer-Merge: runTurn -->>
         }

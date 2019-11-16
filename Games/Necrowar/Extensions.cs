@@ -83,5 +83,10 @@ namespace Joueur.cs.Games.Necrowar
                 return result;
             };
         }
+
+        public static IEnumerable<T> ToEnumerable<T>(this T item)
+        {
+            return new[] { item };
+        }
     }
 }
