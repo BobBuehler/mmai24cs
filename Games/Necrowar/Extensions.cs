@@ -6,6 +6,7 @@ namespace Joueur.cs.Games.Necrowar
 {
     public static class Extensions
     {
+
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             foreach (var s in source)
@@ -87,6 +88,54 @@ namespace Joueur.cs.Games.Necrowar
         public static IEnumerable<T> ToEnumerable<T>(this T item)
         {
             return new[] { item };
+        }
+
+        public static IEnumerable<Tile> getTilesInRange(this Tower tower)
+        {
+            List<Tile> tilesInRange = new List<Tile>();
+
+            /*
+             * Shape of the tower range:
+             *         _   x   _
+             *           x x x
+             *         x x T x x
+             *           x x x
+             *         _   x   _
+            */
+
+            //Grabbing the tiles in the upper half
+            Tile Up = tower.Tile.TileNorth;
+            Tile North = Up.TileNorth;
+            Tile East = Up.TileEast;
+            Tile West = Up.TileWest;
+            tilesInRange.Add(Up);
+            tilesInRange.Add(North);
+            tilesInRange.Add(East);
+            tilesInRange.Add(West);
+
+            //Grabbing the tiles in the lower half
+            Tile Down = tower.Tile.TileSouth;
+            Tile South = Down.TileSouth;
+            East = Down.TileEast;
+            West = Down.TileWest;
+            tilesInRange.Add(Up);
+            tilesInRange.Add(South);
+            tilesInRange.Add(East);
+            tilesInRange.Add(West);
+
+            //Grabbing the tiles to the left 
+            Tile Left = tower.Tile.TileWest;
+            West = Down.TileWest;
+            tilesInRange.Add(Left);
+            tilesInRange.Add(West);
+
+            //Grabbing the tiles to the left 
+            Tile Right = tower.Tile.TileEast;
+            East = Down.TileEast;
+            tilesInRange.Add(Right);
+            tilesInRange.Add(East);
+
+            return tilesInRange;
         }
     }
 }

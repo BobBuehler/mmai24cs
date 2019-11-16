@@ -7,6 +7,31 @@ namespace Joueur.cs.Games.Necrowar
 {
     public static class Solver
     {
+
+        public static void updateTowerRanges(Player Opponent, Dictionary<Tile, List<Tower>> towerRanges)
+        {
+            IEnumerable<Tile> tilesInRange;
+
+            //Clear the lists for all tile paths
+            foreach (var tile in Opponent.Side)
+            {
+                if (tile.IsPath)
+                {
+                    towerRanges[tile] = new List<Tower>();
+                }
+            }
+
+            //Create a list of towers that are in range of the given path tile
+            foreach (var Tower in Opponent.Towers)
+            {
+                tilesInRange = Tower.getTilesInRange();
+                foreach (var tile in tilesInRange.Where(t => t != null && t.IsPath))
+                {
+                    towerRanges[tile].Add(Tower);
+                }
+            }
+        }
+
         public static void MoveAttacker(Unit unit, IEnumerable<Tile> targets)
         {
             if (unit.Acted || unit.Moves == 0)

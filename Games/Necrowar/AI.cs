@@ -58,6 +58,8 @@ namespace Joueur.cs.Games.Necrowar
         public static Tower OUR_CASTLE;
         public static Tower THEIR_CASTLE;
 
+        static Dictionary<Tile, List<Tower>> towerRanges = new Dictionary<Tile, List<Tower>>();
+
         #region Methods
         /// <summary>
         /// This returns your AI's name to the game server. Just replace the string.
@@ -145,6 +147,9 @@ namespace Joueur.cs.Games.Necrowar
         {
             // <<-- Creer-Merge: runTurn -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
             // Put your game logic here for runTurn
+
+            //Update list of towers within range of each path tile
+            Solver.updateTowerRanges(AI.THEM, towerRanges);
 
             if (Solver.CanAfford(AI.US, AI.HOUND))
             {
