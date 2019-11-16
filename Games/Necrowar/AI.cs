@@ -43,7 +43,7 @@ namespace Joueur.cs.Games.Necrowar
         public override string GetName()
         {
             // <<-- Creer-Merge: get-name -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
-            return "Necrowar C# Player"; // REPLACE THIS WITH YOUR TEAM NAME!
+            return "bugs-as-a-service"; // REPLACE THIS WITH YOUR TEAM NAME!
             // <<-- /Creer-Merge: get-name -->>
         }
 
