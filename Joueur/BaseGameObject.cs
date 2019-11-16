@@ -19,7 +19,6 @@ namespace Joueur.cs
         public string GameObjectName { get; protected set; }
 
 
-
         /// <summary>
         /// ToString override, useful for debugging
         /// </summary>
@@ -31,6 +30,15 @@ namespace Joueur.cs
         protected T RunOnServer<T>(string functionName, IDictionary<string, object> args = null)
         {
             return Client.Instance.RunOnServer<T>(this, functionName, args);
+        }
+        public override bool Equals(object obj)
+        {
+            return obj is BaseGameObject && (obj as BaseGameObject).Id == this.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Id.GetHashCode();
         }
     }
 }
