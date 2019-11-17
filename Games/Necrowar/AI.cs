@@ -169,7 +169,7 @@ namespace Joueur.cs.Games.Necrowar
 
             foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
             {
-                Solver.MoveAttacker(unit, AI.THEIR_CASTLE.Tile.GetNeighbors());
+                Solver.Move(unit, AI.THEIR_CASTLE.Tile.GetNeighbors());
                 Solver.Attack(unit, AI.THEIR_CASTLE);
             }
             AI.OUR_CASTLE.attackUnits(AI.THEM.Units, Solver.score);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Joueur.cs.Games.Necrowar
@@ -136,6 +137,28 @@ namespace Joueur.cs.Games.Necrowar
             tilesInRange.Add(East);
 
             return tilesInRange;
+        }
+
+        public static int NumUnits(this Tile tile, UnitJob job)
+        {
+            if (tile.Unit == null)
+            {
+                return 0;
+            }
+            if (tile.Unit.Job.PerTile == 1)
+            {
+                return 1;
+            }
+            switch (job.Title)
+            {
+                case "zombie":
+                    return tile.NumZombies;
+                case "ghoul":
+                    return tile.NumGhouls;
+                case "hound":
+                    return tile.NumHounds;
+            }
+            return 1;
         }
     }
 }

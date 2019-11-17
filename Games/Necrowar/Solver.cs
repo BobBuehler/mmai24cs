@@ -32,14 +32,14 @@ namespace Joueur.cs.Games.Necrowar
             }
         }
 
-        public static void MoveAttacker(Unit unit, IEnumerable<Tile> targets)
+        public static void Move(Unit unit, IEnumerable<Tile> targets)
         {
             if (unit.Acted || unit.Moves == 0)
             {
                 return;
             }
 
-            var steps = FindPath(unit.Tile.ToEnumerable(), targets, t => t.IsPath);
+            var steps = FindPath(unit.Tile.ToEnumerable(), targets, t => CanPath(unit, t));
             steps.RemoveFirst();
 
             while (unit.Moves > 0 && steps.Count > 0)
@@ -62,6 +62,15 @@ namespace Joueur.cs.Games.Necrowar
         public static bool CanAfford(Player player, UnitJob job)
         {
             return player.Gold >= job.GoldCost && player.Mana >= job.ManaCost;
+        }
+
+        public static bool CanPath(Unit unit, Tile tile)
+        {
+            if (unit.Job == AI.WORKER)
+            {
+                return tile.Unit == null && tile.IsGrass && tile.Owner != unit.Owner.Opponent;
+            }
+            return tile.IsPath && (tile.Unit == null || (tile.Unit.Job == unit.Job && tile.NumUnits(unit.Job) < unit.Job.PerTile));
         }
 
         public static LinkedList<Tile> FindPath(IEnumerable<Tile> starts, IEnumerable<Tile> goals, Func<Tile, bool> isPathable)
