@@ -172,14 +172,13 @@ namespace Joueur.cs.Games.Necrowar
                 AI.UNIT_SPAWNER.SpawnUnit(AI.HOUND.Title);
                 foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
                 {
-                    Solver.MoveNearest(unit.ToEnumerable(), AI.THEIR_CASTLE.Tile.GetNeighbors(), unit.Job);
+                    Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
                     Solver.Attack(unit, AI.THEIR_CASTLE);
                 }
             }
             foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
             {
-                Solver.MoveNearest(unit.ToEnumerable(), AI.THEIR_CASTLE.Tile.GetNeighbors(), unit.Job);
-                Solver.Attack(unit, AI.THEIR_CASTLE);
+                Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
             }
 
             AI.OUR_CASTLE.attackUnits(AI.THEM.Units, Solver.score);

@@ -63,6 +63,51 @@ namespace Joueur.cs.Games.Necrowar
             return Tuple.Create(mover, target);
         }
 
+        public static void MoveAndSpreadAndAttack(Unit unit, IEnumerable<Tower> targets, UnitJob job)
+        {
+            if (unit.Acted || unit.Moves == 0)
+            {
+                return;
+            }
+
+            var targetNeighbors = new HashSet<Tile>(targets.SelectMany(t => t.Tile.GetNeighbors()));
+
+            var pathsToNeighbors = FindPaths(unit.Tile.ToEnumerable(), targetNeighbors, t => CanPath(job, AI.US, t));
+            var reachableTargetNeighbors = pathsToNeighbors.Keys.Where(t => pathsToNeighbors[t].Count <= unit.Moves + 1);
+
+            LinkedList<Tile> path = null;
+            if (reachableTargetNeighbors.Any())
+            {
+                path = pathsToNeighbors[reachableTargetNeighbors.MinByValue(t => t.NumUnits(job))];
+            }
+            else
+            {
+                var pathsIgnore = FindPaths(unit.Tile.ToEnumerable(), targetNeighbors, t => CanPath(job, AI.US, t, true));
+                if (pathsIgnore.Count > 0)
+                {
+                    path = pathsIgnore.MinByValue(kvp => kvp.Key.NumUnits(job)).Value;
+                }
+            }
+
+            if (path == null)
+            {
+                return;
+            }
+
+            path.RemoveFirst();
+            while (unit.Moves > 0 && path.Count > 0 && CanPath(job, AI.US, path.First()))
+            {
+                unit.Move(path.First());
+                path.RemoveFirst();
+            }
+
+            var target = targets.FirstOrDefault(t => t.Tile.HasNeighbor(unit.Tile));
+            if (target != null)
+            {
+                unit.Attack(target.Tile);
+            }
+        }
+
         public static void Attack(Unit unit, Tower tower)
         {
             if (unit.Acted || !tower.Tile.HasNeighbor(unit.Tile))
@@ -92,6 +137,12 @@ namespace Joueur.cs.Games.Necrowar
             var goalSet = new HashSet<Tile>(goals);
             var astar = new AStar<Tile>(starts, t => goalSet.Contains(t), (t1, t2) => 1, t => 0, t => t.GetNeighbors().Where(isPathable));
             return astar.Path;
+        }
+
+        public static Dictionary<Tile, LinkedList<Tile>> FindPaths(IEnumerable<Tile> starts, IEnumerable<Tile> goals, Func<Tile, bool> isPathable)
+        {
+            var astar = new AStar<Tile>(starts, t => false, (t1, t2) => 1, t => 0, t => t.GetNeighbors().Where(isPathable));
+            return goals.Where(g => astar.GScore.ContainsKey(g)).ToDictionary(g => g, g => astar.CalcPathTo(g));
         }
 
         public static void MoveAndMine(IEnumerable<Unit> workers, IEnumerable<Tile> mines, int count)
@@ -197,8 +248,7 @@ namespace Joueur.cs.Games.Necrowar
             var canHitSupernatural = tower.Job.Title == "cleansing";
 
             //find all the units within range of the tower
-            var availableUnits = units.Where(u => ManhattanDistance(tower.Tile.X, u.Tile.X, tower.Tile.Y, u.Tile.Y) <= 2 
-                                                                && canAttackJob(tower.Job, u.Job));
+            var availableUnits = units.Where(u => canAttackJob(tower.Job, u.Job) && ManhattanDistance(tower.Tile.X, u.Tile.X, tower.Tile.Y, u.Tile.Y) <= 2);
 
             if (availableUnits.Any())
             {
@@ -215,6 +265,10 @@ namespace Joueur.cs.Games.Necrowar
 
         public static bool canAttackJob(TowerJob towerJ, UnitJob unitJ)
         {
+            if (towerJ == AI.CASTLE)
+            {
+                return true;
+            }
             if (towerJ == AI.CLEANSING)
             {
                 return unitJ == AI.WRAITH || unitJ == AI.ABOMINATION;
