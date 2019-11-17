@@ -59,6 +59,7 @@ namespace Joueur.cs.Games.Necrowar
         public static Tower THEIR_CASTLE;
 
         public static IEnumerable<Tile> GOLD_MINES;
+        public static HashSet<Tile> RIVER_NEIGHBORS;
 
         static Dictionary<Tile, List<Tower>> towerRanges = new Dictionary<Tile, List<Tower>>();
         #region Methods
@@ -109,6 +110,7 @@ namespace Joueur.cs.Games.Necrowar
             AI.THEIR_CASTLE = AI.THEM.Towers.First(t => t.Job == AI.CASTLE);
 
             AI.GOLD_MINES = AI.GAME.Tiles.Where(t => t.IsGoldMine && t.Owner == AI.US);
+            AI.RIVER_NEIGHBORS = new HashSet<Tile>(AI.GAME.Tiles.Where(t => t.IsRiver).SelectMany(t => t.GetNeighbors()).Where(t => t.IsGrass));
 
             // <<-- /Creer-Merge: start -->>
         }
@@ -148,101 +150,61 @@ namespace Joueur.cs.Games.Necrowar
         /// <returns>Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.</returns>
         public bool RunTurn()
         {
+            Console.WriteLine("Turn " + this.Game.CurrentTurn);
             // <<-- Creer-Merge: runTurn -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
             // Put your game logic here for runTurn
 
             //Update list of towers within range of each path tile
-            Solver.updateTowerRanges(AI.THEM, towerRanges);
+            //Solver.updateTowerRanges(AI.THEM, towerRanges);
 
-            if (AI.GAME.Units.Where(u => u.Job == WORKER).Count() < AI.GOLD_MINES.Count())
-            {
-                if (Solver.CanAfford(AI.US, AI.WORKER))
-                {
-                    AI.WORKER_SPAWNER.SpawnWorker();
-                }
-            }
+            //if (AI.GAME.Units.Where(u => u.Job == WORKER).Count() < AI.GOLD_MINES.Count())
+            //{
+            //    if (Solver.CanAfford(AI.US, AI.WORKER))
+            //    {
+            //        AI.WORKER_SPAWNER.SpawnWorker();
+            //    }
+            //}
 
-            if (Solver.CanAfford(AI.US, AI.HOUND))
+            this.workers();
+
+            while (Solver.CanAfford(AI.US, AI.HOUND))
             {
                 AI.UNIT_SPAWNER.SpawnUnit(AI.HOUND.Title);
+                foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
+                {
+                    Solver.Move(unit, AI.THEIR_CASTLE.Tile.GetNeighbors());
+                    Solver.Attack(unit, AI.THEIR_CASTLE);
+                }
             }
-
             foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
             {
                 Solver.Move(unit, AI.THEIR_CASTLE.Tile.GetNeighbors());
                 Solver.Attack(unit, AI.THEIR_CASTLE);
             }
+
             AI.OUR_CASTLE.attackUnits(AI.THEM.Units, Solver.score);
+
             return true;
             // <<-- /Creer-Merge: runTurn -->>
         }
 
-        /// <summary>
-        /// A very basic path finding algorithm (Breadth First Search) that when given a starting Tile, will return a valid path to the goal Tile.
-        /// </summary>
-        /// <remarks>
-        /// This is NOT an optimal pathfinding algorithm. It is intended as a stepping stone if you want to improve it.
-        /// </remarks>
-        /// <param name="start">the starting Tile</param>
-        /// <param name="goal">the goal Tile</param>
-        /// <returns>A list of Tiles representing the path where the first element is a valid adjacent Tile to the start, and the last element is the goal. Or an empty list if no path found.</returns>
-        List<Tile> FindPath(Tile start, Tile goal)
+        public void workers()
         {
-            // no need to make a path to here...
-            if (start == goal)
+            if (AI.US.Units.Count(u => u.Job == AI.WORKER) <= 4 && Solver.CanAfford(AI.US, AI.WORKER))
             {
-                return new List<Tile>();
+                AI.WORKER_SPAWNER.SpawnWorker();
             }
 
-            // the tiles that will have their neighbors searched for 'goal'
-            Queue<Tile> fringe = new Queue<Tile>();
+            var goldCounts = new int[] { 1, 2, 2, 3, 3, 4, 5, 5, 6 };
+            var workers = AI.US.Units.Where(u => u.Job == AI.WORKER);
+            var workerCount = workers.Count();
+            var goldCount = goldCounts[workerCount];
+            var fishCount = workerCount - goldCount;
 
-            // How we got to each tile that went into the fringe.
-            Dictionary<Tile, Tile> cameFrom = new Dictionary<Tile, Tile>();
-
-            // Enqueue start as the first tile to have its neighbors searched.
-            fringe.Enqueue(start);
-
-            // keep exploring neighbors of neighbors... until there are no more.
-            while (fringe.Any())
-            {
-                // the tile we are currently exploring.
-                Tile inspect = fringe.Dequeue();
-
-                // cycle through the tile's neighbors.
-                foreach (Tile neighbor in inspect.GetNeighbors())
-                {
-                    if (neighbor == goal)
-                    {
-                        // Follow the path backward starting at the goal and return it.
-                        List<Tile> path = new List<Tile>();
-                        path.Add(goal);
-
-                        // Starting at the tile we are currently at, insert them retracing our steps till we get to the starting tile
-                        for (Tile step = inspect; step != start; step = cameFrom[step])
-                        {
-                            path.Insert(0, step);
-                        }
-
-                        return path;
-                    }
-
-                    // if the tile exists, has not been explored or added to the fringe yet, and it is pathable
-                    if (neighbor != null && !cameFrom.ContainsKey(neighbor) && neighbor.IsPathable())
-                    {
-                        // add it to the tiles to be explored and add where it came from.
-                        fringe.Enqueue(neighbor);
-                        cameFrom.Add(neighbor, inspect);
-                    }
-
-                } // foreach(neighbor)
-
-            } // while(fringe not empty)
-
-            // if you're here, that means that there was not a path to get to where you want to go.
-            //   in that case, we'll just return an empty path.
-            return new List<Tile>();
+            Solver.MoveAndMine(workers, AI.GOLD_MINES, goldCount);
+            Solver.MoveAndFish(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), fishCount);
         }
+
 
         // <<-- Creer-Merge: methods -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         // you can add additional methods here for your AI to call

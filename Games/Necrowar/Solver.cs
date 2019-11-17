@@ -39,7 +39,11 @@ namespace Joueur.cs.Games.Necrowar
                 return;
             }
 
-            var steps = FindPath(unit.Tile.ToEnumerable(), targets, t => CanPath(unit, t));
+            var steps = FindPath(unit.Tile.ToEnumerable(), targets, t => CanPath(unit.Job, unit.Owner, t));
+            if (steps.Count == 0)
+            {
+                return;
+            }
             steps.RemoveFirst();
 
             while (unit.Moves > 0 && steps.Count > 0)
@@ -64,13 +68,13 @@ namespace Joueur.cs.Games.Necrowar
             return player.Gold >= job.GoldCost && player.Mana >= job.ManaCost;
         }
 
-        public static bool CanPath(Unit unit, Tile tile)
+        public static bool CanPath(UnitJob job, Player player, Tile tile)
         {
-            if (unit.Job == AI.WORKER)
+            if (job == AI.WORKER)
             {
-                return tile.Unit == null && tile.IsGrass && tile.Owner != unit.Owner.Opponent;
+                return tile.Unit == null && tile.IsGrass && tile.Owner != player.Opponent;
             }
-            return tile.IsPath && (tile.Unit == null || (tile.Unit.Job == unit.Job && tile.NumUnits(unit.Job) < unit.Job.PerTile));
+            return tile.IsPath && (tile.Unit == null || (tile.Unit.Job == job && tile.NumUnits(job) < job.PerTile));
         }
 
         public static LinkedList<Tile> FindPath(IEnumerable<Tile> starts, IEnumerable<Tile> goals, Func<Tile, bool> isPathable)
@@ -80,14 +84,15 @@ namespace Joueur.cs.Games.Necrowar
             return astar.Path;
         }
 
-        public static void MoveWorkersToMine(IEnumerable<Unit> workers, IEnumerable<Tile> mines)
+        public static void MoveAndMine(IEnumerable<Unit> workers, IEnumerable<Tile> mines, int count)
         {
             var workerSet = new HashSet<Unit>(workers);
             var mineSet = new HashSet<Tile>(mines);
+            var remaining = count;
 
-            while (workerSet.Count > 0 && mineSet.Count > 0)
+            while (workerSet.Count > 0 && mineSet.Count > 0 && remaining > 0)
             {
-                var steps = FindPath(workerSet.Select(w => w.Tile), mineSet, t => t.IsGrass);
+                var steps = FindPath(workerSet.Select(w => w.Tile), mineSet, t => Solver.CanPath(AI.WORKER, AI.US, t));
                 if (steps.Count == 0)
                 {
                     break;
@@ -109,6 +114,41 @@ namespace Joueur.cs.Games.Necrowar
 
                 workerSet.Remove(worker);
                 mineSet.Remove(mine);
+                remaining--;
+            }
+        }
+
+        public static void MoveAndFish(IEnumerable<Unit> workers, int count)
+        {
+            var workerSet = new HashSet<Unit>(workers);
+            var fishingSet = new HashSet<Tile>(AI.RIVER_NEIGHBORS);
+            var remaining = count;
+
+            while (workerSet.Count > 0 && fishingSet.Count > 0 && remaining > 0)
+            {
+                var steps = FindPath(workerSet.Select(w => w.Tile), fishingSet, t => Solver.CanPath(AI.WORKER, AI.US, t));
+                if (steps.Count == 0)
+                {
+                    break;
+                }
+                var worker = steps.First.Value.Unit;
+                var fishingSpot = steps.Last.Value;
+
+                steps.RemoveFirst();
+                while (worker.Moves > 0 && steps.Count > 0)
+                {
+                    worker.Move(steps.First());
+                    steps.RemoveFirst();
+                }
+
+                if (fishingSet.Contains(worker.Tile))
+                {
+                    worker.Fish(worker.Tile.GetNeighbors().First(t => t.IsRiver));
+                }
+
+                workerSet.Remove(worker);
+                fishingSet.Remove(fishingSpot);
+                remaining--;
             }
         }
 
