@@ -60,8 +60,8 @@ namespace Joueur.cs.Games.Necrowar
         public static Tower OUR_CASTLE;
         public static Tower THEIR_CASTLE;
 
-        public static IEnumerable<Tile> GOLD_MINES;
-        public static IEnumerable<Tile> ISLAND_GOLD_MINES;
+        public static HashSet<Tile> GOLD_MINES;
+        public static HashSet<Tile> ISLAND_GOLD_MINES;
         public static HashSet<Tile> RIVER_NEIGHBORS;
 
         public static Queue<Tile> CLEANSING_BUILD_TILES;
@@ -116,8 +116,8 @@ namespace Joueur.cs.Games.Necrowar
             AI.OUR_CASTLE = AI.US.Towers.First(t => t.Job == AI.CASTLE);
             AI.THEIR_CASTLE = AI.THEM.Towers.First(t => t.Job == AI.CASTLE);
 
-            AI.GOLD_MINES = AI.GAME.Tiles.Where(t => t.IsGoldMine && t.Owner == AI.US);
-            AI.ISLAND_GOLD_MINES = AI.GAME.Tiles.Where(t => t.IsIslandGoldMine);
+            AI.GOLD_MINES = new HashSet<Tile>(AI.GAME.Tiles.Where(t => t.IsGoldMine && t.Owner == AI.US));
+            AI.ISLAND_GOLD_MINES = new HashSet<Tile>(AI.GAME.Tiles.Where(t => t.IsIslandGoldMine));
             AI.RIVER_NEIGHBORS = new HashSet<Tile>(AI.GAME.Tiles.Where(t => t.IsRiver).SelectMany(t => t.GetNeighbors()).Where(t => t.IsGrass));
 
             AI.CASTLE_TOWER = AI.US.Towers.First(t => t.Job == AI.CASTLE);
@@ -128,8 +128,8 @@ namespace Joueur.cs.Games.Necrowar
 
             if (AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.IsPath)
             {
-                AI.CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
-                AI.CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
 
                 ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileEast.TileEast);
                 ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileWest.TileWest);
