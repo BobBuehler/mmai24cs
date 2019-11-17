@@ -268,6 +268,11 @@ namespace Joueur.cs.Games.Necrowar
             return Math.Abs(x1 - x2) + Math.Abs(y1 - y2);
         }
 
+        public static int ManhattanDistance(Tile t1, Tile t2)
+        {
+            return Math.Abs(t1.X - t2.X) + Math.Abs(t1.Y - t2.Y);
+        }
+
         public static bool canAttackJob(TowerJob towerJ, UnitJob unitJ)
         {
             if (unitJ == AI.WORKER)

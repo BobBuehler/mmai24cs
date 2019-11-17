@@ -91,7 +91,7 @@ namespace Joueur.cs.Games.Necrowar
             return new[] { item };
         }
 
-        public static IEnumerable<Tile> getTilesInRange(this Tower tower)
+        public static IEnumerable<Tile> getTilesInRange(this Tile tile)
         {
             List<Tile> tilesInRange = new List<Tile>();
 
@@ -105,7 +105,7 @@ namespace Joueur.cs.Games.Necrowar
             */
 
             //Grabbing the tiles in the upper half
-            Tile Up = tower.Tile.TileNorth;
+            Tile Up = tile;
             Tile North = Up.TileNorth;
             Tile East = Up.TileEast;
             Tile West = Up.TileWest;
@@ -115,7 +115,7 @@ namespace Joueur.cs.Games.Necrowar
             tilesInRange.Add(West);
 
             //Grabbing the tiles in the lower half
-            Tile Down = tower.Tile.TileSouth;
+            Tile Down = tile;
             Tile South = Down.TileSouth;
             East = Down.TileEast;
             West = Down.TileWest;
@@ -125,18 +125,23 @@ namespace Joueur.cs.Games.Necrowar
             tilesInRange.Add(West);
 
             //Grabbing the tiles to the left 
-            Tile Left = tower.Tile.TileWest;
+            Tile Left = tile;
             West = Down.TileWest;
             tilesInRange.Add(Left);
             tilesInRange.Add(West);
 
             //Grabbing the tiles to the left 
-            Tile Right = tower.Tile.TileEast;
+            Tile Right = tile.TileEast;
             East = Down.TileEast;
             tilesInRange.Add(Right);
             tilesInRange.Add(East);
 
             return tilesInRange;
+        }
+
+        public static IEnumerable<Tile> getTilesInRange(this Tower tower)
+        {
+            return tower.Tile.getTilesInRange();
         }
 
         public static int NumUnits(this Tile tile, UnitJob job)
