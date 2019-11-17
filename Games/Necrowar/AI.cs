@@ -204,24 +204,24 @@ namespace Joueur.cs.Games.Necrowar
 
             this.workers();
 
-            while (Solver.CanAfford(AI.US, AI.HOUND) && AI.UNIT_SPAWNER.Unit == null)
-            {
-                AI.UNIT_SPAWNER.SpawnUnit(AI.HOUND.Title);
-                foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
-                {
-                    Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
-                    Solver.Attack(unit, AI.THEIR_CASTLE);
-                }
-            }
-            foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
-            {
-                Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
-            }
+            this.attackers();
 
-            AI.OUR_CASTLE.attackUnits(AI.THEM.Units, Solver.score);
+            this.towers();
 
             return true;
             // <<-- /Creer-Merge: runTurn -->>
+        }
+
+        public void makeTowers()
+        {
+            if (AI.US.Units.Count(u => u.Job == AI.WORKER) < 8)
+            {
+                while (Solver.CanAfford(AI.US, AI.WORKER))
+                {
+                    AI.WORKER_SPAWNER.SpawnWorker();
+                    Solver.MoveAndMine(AI.WORKER_SPAWNER.Unit.ToEnumerable(), AI.GOLD_MINES, 1);
+                }
+            }
         }
 
         public void workers()
@@ -261,6 +261,28 @@ namespace Joueur.cs.Games.Necrowar
             Solver.MoveAndMine(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), AI.GOLD_MINES, goldCount);
             //CHANGE FISH TILES TO EXCLUDE ISLAND TILES
             Solver.MoveAndFish(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), fishCount);
+        }
+
+        public void attackers()
+        {
+            while (Solver.CanAfford(AI.US, AI.HOUND) && AI.UNIT_SPAWNER.Unit == null)
+            {
+                AI.UNIT_SPAWNER.SpawnUnit(AI.HOUND.Title);
+                foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
+                {
+                    Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
+                    Solver.Attack(unit, AI.THEIR_CASTLE);
+                }
+            }
+            foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
+            {
+                Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
+            }
+        }
+
+        public void towers()
+        {
+            AI.OUR_CASTLE.attackUnits(AI.THEM.Units, Solver.score);
         }
 
 
