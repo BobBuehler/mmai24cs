@@ -103,6 +103,69 @@ namespace Joueur.cs.Games.Necrowar
             }
         }
 
+        public static float score(Unit unit)
+        {
+            float score = 0;
+            // unit types are 'worker', 'zombie', 'ghoul', 'hound', 'abomination', 'wraith' or 'horseman'
+            switch (unit.Job.Title)
+            {
+                case "worker":
+                    score = 1;
+                    break;
+                case "zombie":
+                    score = 5;
+                    break;
+                case "ghoul":
+                    score = 5;
+                    break;
+                case "hound":
+                    score = 5;
+                    break;
+                case "abomination":
+                    score = 5;
+                    break;
+                case "wraith":
+                    score = 15;
+                    break;
+                case "horseman":
+                    score = 10;
+                    break;
+                default:
+                    break;
+            }
+            //we increment the score of the target based off of missing health
+            var currHealth = unit.Health;
+            while(currHealth < unit.Job.Health)
+            {
+                score++;
+                currHealth++;
+            }
+
+            return 0;
+        }
+
+        public static void attackUnits(this Tower tower, IEnumerable<Unit> units, Func<Unit, float> score)
+        {
+            //can this tower hit the supernatural?
+            bool canHitSupernatural = tower.Job.Title == "cleansing" ? true : false;
+
+            //find all the units within range of the tower
+            IEnumerable<Unit> availableUnits = units.Where(t => ManhattanDistance(tower.Tile.X, t.Tile.X, tower.Tile.Y, t.Tile.Y) < 2 
+                                                                && canHitSupernatural == (t.Job.Title == "wraith")
+                                                                && t != null);
+            if (availableUnits != null && availableUnits.Any())
+            {
+                //find the unit within range that has the highest "score"
+                Unit unit = availableUnits.MaxByValue(score);
+
+                //attack the unit if it exists
+                if (unit != null)
+                {
+                    tower.Attack(unit.Tile);
+                }
+            }
+        }
+
         public static int ManhattanDistance(int x1, int x2, int y1, int y2)
         {
             return Math.Abs(x1 - x2) + Math.Abs(y1 - y2);

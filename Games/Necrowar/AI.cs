@@ -172,7 +172,7 @@ namespace Joueur.cs.Games.Necrowar
                 Solver.MoveAttacker(unit, AI.THEIR_CASTLE.Tile.GetNeighbors());
                 Solver.Attack(unit, AI.THEIR_CASTLE);
             }
-
+            AI.OUR_CASTLE.attackUnits(AI.THEM.Units, Solver.score);
             return true;
             // <<-- /Creer-Merge: runTurn -->>
         }
