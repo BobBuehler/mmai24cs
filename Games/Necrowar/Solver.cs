@@ -182,42 +182,46 @@ namespace Joueur.cs.Games.Necrowar
                 default:
                     break;
             }
-            //we increment the score of the target based off of missing health
-            var currHealth = unit.Health;
-            while(currHealth < unit.Job.Health)
-            {
-                score++;
-                currHealth++;
-            }
+            
+            score += unit.Job.Health - unit.Health;
 
-            return 0;
+            return score;
         }
 
         public static void attackUnits(this Tower tower, IEnumerable<Unit> units, Func<Unit, float> score)
         {
+            if (tower.Cooldown > 0)
+            {
+                return;
+            }
+
             //can this tower hit the supernatural?
-            bool canHitSupernatural = tower.Job.Title == "cleansing" ? true : false;
+            var canHitSupernatural = tower.Job.Title == "cleansing";
 
             //find all the units within range of the tower
-            IEnumerable<Unit> availableUnits = units.Where(t => ManhattanDistance(tower.Tile.X, t.Tile.X, tower.Tile.Y, t.Tile.Y) < 2 
-                                                                && canHitSupernatural == (t.Job.Title == "wraith")
-                                                                && t != null);
-            if (availableUnits != null && availableUnits.Any())
+            var availableUnits = units.Where(u => ManhattanDistance(tower.Tile.X, u.Tile.X, tower.Tile.Y, u.Tile.Y) <= 2 
+                                                                && canAttackJob(tower.Job, u.Job));
+
+            if (availableUnits.Any())
             {
                 //find the unit within range that has the highest "score"
-                Unit unit = availableUnits.MaxByValue(score);
-
-                //attack the unit if it exists
-                if (unit != null)
-                {
-                    tower.Attack(unit.Tile);
-                }
+                var unit = availableUnits.MaxByValue(score);
+                tower.Attack(unit.Tile);
             }
         }
 
         public static int ManhattanDistance(int x1, int x2, int y1, int y2)
         {
             return Math.Abs(x1 - x2) + Math.Abs(y1 - y2);
+        }
+
+        public static bool canAttackJob(TowerJob towerJ, UnitJob unitJ)
+        {
+            if (towerJ == AI.CLEANSING)
+            {
+                return unitJ == AI.WRAITH || unitJ == AI.ABOMINATION;
+            }
+            return unitJ != AI.WRAITH;
         }
     }
 }
