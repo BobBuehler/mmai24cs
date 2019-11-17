@@ -68,7 +68,8 @@ namespace Joueur.cs.Games.Necrowar
         public static List<Tile> RIGHT_TOWERS;
         public static List<TowerJob> TOWER_PATTERN;
 
-        static Dictionary<Tile, List<Tower>> towerRanges = new Dictionary<Tile, List<Tower>>();
+        public static HashSet<Tile> PATTERN;
+        
         #region Methods
         /// <summary>
         /// This returns your AI's name to the game server. Just replace the string.
@@ -142,6 +143,39 @@ namespace Joueur.cs.Games.Necrowar
 
             AI.TOWER_PATTERN = new List<TowerJob>() { AI.CLEANSING, AI.AOE, AI.ARROW };
 
+            string[] pattern;
+            switch (new Random().Next(0, 2))
+            {
+                case 0:
+                    pattern = new[] { "0110110", "1001001", "1000001", "0100010", "0010100", "0001000" };
+                    break;
+                case 1:
+                default:
+                    pattern = new[] { "01100", "00010", "00101", "01001", "10000" };
+                    break;
+            }
+            Console.WriteLine(String.Join("\n", pattern));
+
+            Tile patternAnchor;
+            if (AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.IsPath)
+            {
+                patternAnchor = AI.GAME.GetTileAt(35, 12);
+            }
+            else
+            {
+                patternAnchor = AI.GAME.GetTileAt(21, 12);
+            }
+
+            AI.PATTERN = new HashSet<Tile>();
+            for (int x = 0; x < pattern[0].Length; x++)
+            {
+                for (int y = 0; y < pattern.Length; y++)
+                {
+                    if (pattern[y][x] == '1')
+                        AI.PATTERN.Add(AI.GAME.GetTileAt(patternAnchor.X + x, patternAnchor.Y + y));
+                }
+            }
+
             // <<-- /Creer-Merge: start -->>
         }
 
@@ -182,25 +216,16 @@ namespace Joueur.cs.Games.Necrowar
         {
             Console.WriteLine("Turn " + this.Game.CurrentTurn);
             // <<-- Creer-Merge: runTurn -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
-            // Put your game logic here for runTurn
-
-            //Update list of towers within range of each path tile
-            //Solver.updateTowerRanges(AI.THEM, towerRanges);
-
-            //if (AI.GAME.Units.Where(u => u.Job == WORKER).Count() < AI.GOLD_MINES.Count())
-            //{
-            //    if (Solver.CanAfford(AI.US, AI.WORKER))
-            //    {
-            //        AI.WORKER_SPAWNER.SpawnWorker();
-            //    }
-            //}
-
-            // this.workers();
 
 
-            this.farmers();
-
-            this.builders();
+            if (AI.US.Units.Count(u => u.Job == AI.WORKER) < AI.PATTERN.Count)
+            {
+                this.farmers();
+            }
+            else
+            {
+                this.marchers();
+            }
 
             // this.attackers();
 
@@ -212,155 +237,41 @@ namespace Joueur.cs.Games.Necrowar
 
         public void farmers()
         {
-            if (AI.US.Units.Count(u => u.Job == AI.WORKER) < 13)
+            while (Solver.CanAfford(AI.US, AI.WORKER) && AI.US.Units.Count(u => u.Job == AI.WORKER) < AI.PATTERN.Count)
             {
-                while (Solver.CanAfford(AI.US, AI.WORKER) && AI.US.Units.Count(u => u.Job == AI.WORKER) < 13)
+                AI.WORKER_SPAWNER.SpawnWorker();
+                Solver.MoveAndMine(AI.WORKER_SPAWNER.Unit.ToEnumerable(), AI.GOLD_MINES, 4);
+                if (AI.WORKER_SPAWNER.Unit != null)
                 {
-                    AI.WORKER_SPAWNER.SpawnWorker();
-                    Solver.MoveAndMine(AI.WORKER_SPAWNER.Unit.ToEnumerable(), AI.GOLD_MINES, 4);
-                    if (AI.WORKER_SPAWNER.Unit != null)
-                    {
-                        Solver.MoveAndFish(AI.WORKER_SPAWNER.Unit.ToEnumerable(), 1);
-                    }
+                    Solver.MoveAndFish(AI.WORKER_SPAWNER.Unit.ToEnumerable(), 1);
                 }
             }
 
-
+            var workers = AI.US.Units.Where(u => u.Job == AI.WORKER);
 
             if (AI.GAME.RiverPhase - (AI.GAME.CurrentTurn % AI.GAME.RiverPhase) >= 2)
             {
-                Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.ISLAND_GOLD_MINES, 3);
-                Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.GOLD_MINES, 4);
-                Solver.MoveAndFish(AI.US.Units.Where(u => u.Job == AI.WORKER), 4);
+                Solver.MoveAndMine(workers, AI.ISLAND_GOLD_MINES, 3);
+                Solver.MoveAndMine(workers, AI.GOLD_MINES, 4);
+                Solver.MoveAndFish(workers, 50);
             }
             else
             {
-                Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.GOLD_MINES, 4);
-                Solver.MoveAndFish(AI.US.Units.Where(u => u.Job == AI.WORKER), 7);
+                Solver.MoveAndMine(workers, AI.GOLD_MINES, 4);
+                Solver.MoveAndFish(workers, 50);
             }
         }
 
-        public void builders()
+        public void marchers()
         {
-            var availableWorkers = AI.US.Units.Where(u => u.Job == AI.WORKER && u.Moves > 0 && u.Acted == false);
-            if (!availableWorkers.Any())
+            var remaining = new HashSet<Tile>(AI.PATTERN);
+            var units = new HashSet<Unit>(AI.US.Units.Where(u => u.Job == AI.WORKER));
+            while (remaining.Count > 0)
             {
-                return;
+                var movedTuple = Solver.MoveNearest(units, remaining, AI.WORKER);
+                units.Remove(movedTuple.Item1);
+                remaining.Remove(movedTuple.Item2);
             }
-
-            var leftIndex = AI.LEFT_TOWERS.FindIndex(t => t.Tower == null);
-            var rightIndex = AI.RIGHT_TOWERS.FindIndex(t => t.Tower == null);
-            Tile targetTile1 = null;
-            Tile targetTile2 = null;
-            if (leftIndex >= 0)
-            {
-                if (rightIndex >= 0)
-                {
-                    if (leftIndex <= rightIndex)
-                    {
-                        targetTile1 = AI.LEFT_TOWERS[leftIndex];
-                        targetTile2 = AI.RIGHT_TOWERS[rightIndex];
-                    }
-                    else
-                    {
-                        targetTile1 = AI.RIGHT_TOWERS[rightIndex];
-                        targetTile2 = AI.LEFT_TOWERS[leftIndex];
-                    }
-                }
-                else
-                {
-                    targetTile1 = AI.LEFT_TOWERS[leftIndex];
-                }
-            }
-            else if (rightIndex >= 0)
-            {
-                targetTile1 = AI.RIGHT_TOWERS[rightIndex];
-            }
-
-            if (targetTile1 == null)
-            {
-                return;
-            }
-
-            var moved = Solver.MoveNearest(availableWorkers, targetTile1.ToEnumerable(), AI.WORKER);
-            if (moved == null)
-            {
-                return;
-            }
-
-            var builder = moved.Item1;
-            var tile = moved.Item2;
-
-            if (builder.Tile == tile)
-            {
-                var towerJob = AI.TOWER_PATTERN[Math.Abs(tile.Y - AI.LEFT_TOWERS[0].Y) % AI.TOWER_PATTERN.Count];
-                if (Solver.CanAfford(builder.Owner, towerJob))
-                {
-                    builder.Build(towerJob.Title);
-                }
-            }
-
-            if (targetTile2 == null)
-            {
-                return;
-            }
-            availableWorkers = availableWorkers.Where(u => u != builder);
-            moved = Solver.MoveNearest(availableWorkers, targetTile2.ToEnumerable(), AI.WORKER);
-            if (moved == null)
-            {
-                return;
-            }
-
-            builder = moved.Item1;
-            tile = moved.Item2;
-
-            if (builder.Tile == tile)
-            {
-                var tower = AI.TOWER_PATTERN[Math.Abs(tile.Y - AI.LEFT_TOWERS[0].Y) % AI.TOWER_PATTERN.Count];
-                if (Solver.CanAfford(builder.Owner, tower))
-                {
-                    builder.Build(tower.Title);
-                }
-            }
-        }
-
-        public void workers()
-        {
-            if (AI.US.Units.Count(u => u.Job == AI.WORKER) <= 7 && Solver.CanAfford(AI.US, AI.WORKER))
-            {
-                AI.WORKER_SPAWNER.SpawnWorker();
-            }
-
-            var goldCounts = new int[] { 0, 0, 1, 1, 2, 2, 3, 4, 4, 4 };
-            var islandGoldCounts = new int[] { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-            var workers = AI.US.Units.Where(u => u.Job == AI.WORKER);
-            var workerCount = workers.Count();
-
-            var availableIslandGoldMines = AI.ISLAND_GOLD_MINES.Where(t => t.Unit == null).Count();
-            var availableGoldMines = AI.GOLD_MINES.Where(t => t.Unit == null).Count();
-
-            var remainingWorkers = 0;
-
-            var islandGoldCount = islandGoldCounts[workerCount];
-            if(islandGoldCount > availableIslandGoldMines)
-            {
-                remainingWorkers = islandGoldCount - availableIslandGoldMines;
-                islandGoldCount = availableIslandGoldMines;
-            }
-            var goldCount = goldCounts[workerCount] + remainingWorkers;
-
-            if (goldCount > availableGoldMines)
-            {
-                remainingWorkers = goldCount - availableGoldMines;
-                goldCount = availableGoldMines;
-            }
-            var fishCount = workerCount - (goldCount + islandGoldCount);
-
-             
-            Solver.MoveAndMine(workers, AI.ISLAND_GOLD_MINES.Where(t => t.Unit == null), islandGoldCount);
-            Solver.MoveAndMine(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), AI.GOLD_MINES, goldCount);
-            //CHANGE FISH TILES TO EXCLUDE ISLAND TILES
-            Solver.MoveAndFish(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), fishCount);
         }
 
         public void attackers()
