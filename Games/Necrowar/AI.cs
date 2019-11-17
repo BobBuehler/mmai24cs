@@ -129,10 +129,17 @@ namespace Joueur.cs.Games.Necrowar
             if (AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.IsPath)
             {
                 CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileWest);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
                 CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
 
                 ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileEast.TileEast);
                 ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileWest.TileWest);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileWest);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileWest);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
 
                 AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileWest.TileWest);
                 AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileEast.TileEast);
@@ -140,10 +147,19 @@ namespace Joueur.cs.Games.Necrowar
             else
             {
                 CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileEast);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileEast);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
                 CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
 
                 ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileWest.TileWest);
                 ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileEast.TileEast);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileEast);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileEast);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
 
                 AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileEast.TileEast);
                 AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileWest.TileWest);
@@ -202,9 +218,11 @@ namespace Joueur.cs.Games.Necrowar
             //    }
             //}
 
-            this.workers();
+            // this.workers();
 
             this.attackers();
+
+            this.makeTowers();
 
             this.towers();
 
@@ -214,13 +232,62 @@ namespace Joueur.cs.Games.Necrowar
 
         public void makeTowers()
         {
-            if (AI.US.Units.Count(u => u.Job == AI.WORKER) < 8)
+            if (AI.US.Units.Count(u => u.Job == AI.WORKER) < 9)
             {
-                while (Solver.CanAfford(AI.US, AI.WORKER))
+                while (Solver.CanAfford(AI.US, AI.WORKER) && AI.US.Units.Count(u => u.Job == AI.WORKER) < 9)
                 {
                     AI.WORKER_SPAWNER.SpawnWorker();
-                    Solver.MoveAndMine(AI.WORKER_SPAWNER.Unit.ToEnumerable(), AI.GOLD_MINES, 1);
+                    Solver.MoveAndMine(AI.WORKER_SPAWNER.Unit.ToEnumerable(), AI.GOLD_MINES.Concat(AI.ISLAND_GOLD_MINES), 1);
                 }
+            }
+            Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.GOLD_MINES.Concat(AI.ISLAND_GOLD_MINES), 5);
+            Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.GOLD_MINES.Concat(AI.ISLAND_GOLD_MINES), 5);
+            Solver.MoveAndFish(AI.US.Units.Where(u => u.Job == AI.WORKER), 3);
+
+            TowerJob nextTower = null;
+            Tile nextTile = null;
+            var wraithCount = AI.THEM.Units.Count(u => u.Job == AI.WRAITH);
+            var cleansingCount = AI.US.Towers.Count(t => t.Job == AI.CLEANSING);
+            if (wraithCount > cleansingCount && cleansingCount < AI.CLEANSING_BUILD_TILES.Count)
+            {
+                nextTower = AI.CLEANSING;
+                nextTile = AI.CLEANSING_BUILD_TILES.FirstOrDefault(t => t.Tower == null);
+            }
+            else
+            {
+                var houndCount = AI.THEM.Units.Count(u => u.Job == AI.HOUND);
+                var aoeCount = AI.US.Towers.Count(t => t.Job == AI.AOE);
+                if (houndCount > aoeCount * 2 && aoeCount < AI.AOE_BUILD_TILES.Count)
+                {
+                    nextTower = AI.AOE;
+                    nextTile = AI.AOE_BUILD_TILES.FirstOrDefault(t => t.Tower == null);
+                }
+                else
+                {
+                    var arrowCount = AI.US.Towers.Count(t => t.Job == AI.ARROW);
+                    if (arrowCount < AI.THEM.Units.Count(u => Solver.canAttackJob(AI.ARROW, u.Job)) && arrowCount < AI.ARROW_BUILD_TILES.Count)
+                    {
+                        nextTower = AI.ARROW;
+                        nextTile = AI.ARROW_BUILD_TILES.FirstOrDefault(t => t.Tower == null);
+                    }
+                }
+            }
+
+            if (nextTower == null || nextTile == null)
+            {
+                return;
+            }
+
+            var builder = AI.US.Units.FirstOrDefault(u => u.Job == AI.WORKER && u.Moves > 0 && u.Acted == false);
+            if (builder == null)
+            {
+                return;
+            }
+
+            Solver.MoveNearest(builder.ToEnumerable(), nextTile.ToEnumerable(), AI.WORKER);
+            if (builder.Tile == nextTile && Solver.CanAfford(AI.US, nextTower))
+            {
+                builder.Build(nextTower.Title);
             }
         }
 
@@ -265,15 +332,20 @@ namespace Joueur.cs.Games.Necrowar
 
         public void attackers()
         {
-            while (Solver.CanAfford(AI.US, AI.HOUND) && AI.UNIT_SPAWNER.Unit == null)
+
+            if (Solver.CanAfford(AI.US, AI.HOUND, 6))
             {
-                AI.UNIT_SPAWNER.SpawnUnit(AI.HOUND.Title);
-                foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
+                while (Solver.CanAfford(AI.US, AI.HOUND) && AI.UNIT_SPAWNER.Unit == null)
                 {
-                    Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
-                    Solver.Attack(unit, AI.THEIR_CASTLE);
+                    AI.UNIT_SPAWNER.SpawnUnit(AI.HOUND.Title);
+                    foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
+                    {
+                        Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
+                        Solver.Attack(unit, AI.THEIR_CASTLE);
+                    }
                 }
             }
+
             foreach (var unit in AI.US.Units.Where(u => u.Job != AI.WORKER))
             {
                 Solver.MoveAndSpreadAndAttack(unit, AI.THEIR_CASTLE.ToEnumerable(), unit.Job);
@@ -282,7 +354,7 @@ namespace Joueur.cs.Games.Necrowar
 
         public void towers()
         {
-            AI.OUR_CASTLE.attackUnits(AI.THEM.Units, Solver.score);
+            AI.US.Towers.ForEach(t => t.attackUnits(AI.THEM.Units, Solver.score));
         }
 
 

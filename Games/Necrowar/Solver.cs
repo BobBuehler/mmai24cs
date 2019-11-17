@@ -85,7 +85,7 @@ namespace Joueur.cs.Games.Necrowar
                 var pathsIgnore = FindPaths(unit.Tile.ToEnumerable(), targetNeighbors, t => CanPath(job, AI.US, t, true));
                 if (pathsIgnore.Count > 0)
                 {
-                    path = pathsIgnore.MinByValue(kvp => kvp.Key.NumUnits(job)).Value;
+                    path = pathsIgnore.MinByValue(kvp => kvp.Value.Count).Value;
                 }
             }
 
@@ -118,7 +118,12 @@ namespace Joueur.cs.Games.Necrowar
             unit.Attack(tower.Tile);
         }
 
-        public static bool CanAfford(Player player, UnitJob job)
+        public static bool CanAfford(Player player, UnitJob job, int count = 1)
+        {
+            return player.Gold >= job.GoldCost * count && player.Mana >= job.ManaCost * count;
+        }
+
+        public static bool CanAfford(Player player, TowerJob job)
         {
             return player.Gold >= job.GoldCost && player.Mana >= job.ManaCost;
         }
@@ -127,7 +132,7 @@ namespace Joueur.cs.Games.Necrowar
         {
             if (job == AI.WORKER)
             {
-                return (ignoreUnits || tile.Unit == null) && tile.IsGrass && tile.Owner != player.Opponent;
+                return (ignoreUnits || tile.Unit == null) && tile.IsGrass && tile.Owner != player.Opponent && tile.Tower == null;
             }
             return tile.IsPath && (ignoreUnits || tile.Unit == null || (tile.Unit.Job == job && tile.NumUnits(job) < job.PerTile));
         }
@@ -265,6 +270,10 @@ namespace Joueur.cs.Games.Necrowar
 
         public static bool canAttackJob(TowerJob towerJ, UnitJob unitJ)
         {
+            if (unitJ == AI.WORKER)
+            {
+                return false;
+            }
             if (towerJ == AI.CASTLE)
             {
                 return true;
