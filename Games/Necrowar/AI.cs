@@ -286,7 +286,8 @@ namespace Joueur.cs.Games.Necrowar
             {
                 var xOffset = 0;
                 var yOffset = 0;
-                switch (new Random().Next(4))
+                var rotate = false;
+                switch (new Random().Next(5))
                 {
                     case 0:
                         xOffset = -1;
@@ -298,15 +299,29 @@ namespace Joueur.cs.Games.Necrowar
                         yOffset = 1;
                         break;
                     case 3:
-                    default:
                         yOffset = -1;
+                        break;
+                    case 4:
+                    default:
+                        rotate = true;
                         break;
                 }
 
-                var newPatern = new HashSet<Tile>(AI.PATTERN.Select(t => AI.GAME.GetTileAt(t.X + xOffset, t.Y + yOffset)));
-                if (newPatern.All(t => Solver.CanPath(AI.WORKER, AI.US, t, true)))
+                HashSet<Tile> newPattern;
+                if (!rotate)
                 {
-                    AI.PATTERN = newPatern;
+                    newPattern = new HashSet<Tile>(AI.PATTERN.Select(t => AI.GAME.GetTileAt(t.X + xOffset, t.Y + yOffset)));
+                }
+                else
+                {
+                    var anchorLeft = AI.PATTERN.Min(t => t.X);
+                    var anchorTop = AI.PATTERN.Min(t => t.Y);
+                    var height = AI.PATTERN.Max(t => t.Y) - anchorTop;
+                    newPattern = new HashSet<Tile>(AI.PATTERN.Select(t => AI.GAME.GetTileAt(anchorLeft + (height - (t.Y - anchorTop)), anchorTop + (t.X - anchorLeft))));
+                }
+                if (newPattern.SelectMany(t => t.GetNeighbors()).All(t => Solver.CanPath(AI.WORKER, AI.US, t, true)))
+                {
+                    AI.PATTERN = newPattern;
                 }
             }
         }
