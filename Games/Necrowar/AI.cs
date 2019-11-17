@@ -156,17 +156,17 @@ namespace Joueur.cs.Games.Necrowar
             }
             Console.WriteLine(String.Join("\n", pattern));
 
+            AI.PATTERN = new HashSet<Tile>();
             Tile patternAnchor;
             if (AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.IsPath)
             {
-                patternAnchor = AI.GAME.GetTileAt(35, 12);
+                patternAnchor = AI.GAME.GetTileAt(36, 11);
             }
             else
             {
-                patternAnchor = AI.GAME.GetTileAt(21, 12);
+                patternAnchor = AI.GAME.GetTileAt(27 - pattern[0].Length, 11);
             }
 
-            AI.PATTERN = new HashSet<Tile>();
             for (int x = 0; x < pattern[0].Length; x++)
             {
                 for (int y = 0; y < pattern.Length; y++)
@@ -271,6 +271,34 @@ namespace Joueur.cs.Games.Necrowar
                 var movedTuple = Solver.MoveNearest(units, remaining, AI.WORKER);
                 units.Remove(movedTuple.Item1);
                 remaining.Remove(movedTuple.Item2);
+            }
+
+            if (!AI.US.Units.Any(u => u.Job == AI.WORKER && u.Moves != u.Job.Moves))
+            {
+                var xOffset = 0;
+                var yOffset = 0;
+                switch (new Random().Next(4))
+                {
+                    case 0:
+                        xOffset = -1;
+                        break;
+                    case 1:
+                        xOffset = 1;
+                        break;
+                    case 2:
+                        yOffset = 1;
+                        break;
+                    case 3:
+                    default:
+                        yOffset = -1;
+                        break;
+                }
+
+                var newPatern = new HashSet<Tile>(AI.PATTERN.Select(t => AI.GAME.GetTileAt(t.X + xOffset, t.Y + yOffset)));
+                if (newPatern.All(t => Solver.CanPath(AI.WORKER, AI.US, t, true)))
+                {
+                    AI.PATTERN = newPatern;
+                }
             }
         }
 
