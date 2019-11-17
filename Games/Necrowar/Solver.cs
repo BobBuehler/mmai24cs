@@ -158,15 +158,6 @@ namespace Joueur.cs.Games.Necrowar
                 {
                     return;
                 }
-                var worker = steps.First.Value.Unit;
-                var mine = steps.Last.Value;
-
-                steps.RemoveFirst();
-                while (worker.Moves > 0 && steps.Count > 0)
-                {
-                    worker.Move(steps.First());
-                    steps.RemoveFirst();
-                }
 
                 var worker = moveTuple.Item1;
                 var mine = moveTuple.Item2;

@@ -226,21 +226,40 @@ namespace Joueur.cs.Games.Necrowar
 
         public void workers()
         {
-            if (AI.US.Units.Count(u => u.Job == AI.WORKER) <= 6 && Solver.CanAfford(AI.US, AI.WORKER))
+            if (AI.US.Units.Count(u => u.Job == AI.WORKER) <= 7 && Solver.CanAfford(AI.US, AI.WORKER))
             {
                 AI.WORKER_SPAWNER.SpawnWorker();
             }
 
-            var goldCounts = new int[] { 0, 0, 1, 1, 2, 2, 3, 4, 4, 5 };
+            var goldCounts = new int[] { 0, 0, 1, 1, 2, 2, 3, 4, 4, 4 };
             var islandGoldCounts = new int[] { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
             var workers = AI.US.Units.Where(u => u.Job == AI.WORKER);
             var workerCount = workers.Count();
-            var goldCount = goldCounts[workerCount];
-            var islandGoldCount = islandGoldCounts[workerCount];
-            var fishCount = workerCount - (goldCount +islandGoldCount);
 
-            Solver.MoveAndMine(workers, AI.ISLAND_GOLD_MINES, islandGoldCount);
+            var availableIslandGoldMines = AI.ISLAND_GOLD_MINES.Where(t => t.Unit == null).Count();
+            var availableGoldMines = AI.GOLD_MINES.Where(t => t.Unit == null).Count();
+
+            var remainingWorkers = 0;
+
+            var islandGoldCount = islandGoldCounts[workerCount];
+            if(islandGoldCount > availableIslandGoldMines)
+            {
+                remainingWorkers = islandGoldCount - availableIslandGoldMines;
+                islandGoldCount = availableIslandGoldMines;
+            }
+            var goldCount = goldCounts[workerCount] + remainingWorkers;
+
+            if (goldCount > availableGoldMines)
+            {
+                remainingWorkers = goldCount - availableGoldMines;
+                goldCount = availableGoldMines;
+            }
+            var fishCount = workerCount - (goldCount + islandGoldCount);
+
+             
+            Solver.MoveAndMine(workers, AI.ISLAND_GOLD_MINES.Where(t => t.Unit == null), islandGoldCount);
             Solver.MoveAndMine(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), AI.GOLD_MINES, goldCount);
+            //CHANGE FISH TILES TO EXCLUDE ISLAND TILES
             Solver.MoveAndFish(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), fishCount);
         }
 
