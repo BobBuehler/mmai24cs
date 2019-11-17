@@ -40,7 +40,7 @@ namespace Joueur.cs.Games.Necrowar
 
         /// <summary>
         /// The amount of gold income per turn per unit in a mine.
-        /// </summary>
+        /// </summary>  
         public int GoldIncomePerUnit { get; protected set; }
 
         /// <summary>

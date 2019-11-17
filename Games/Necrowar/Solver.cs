@@ -158,6 +158,15 @@ namespace Joueur.cs.Games.Necrowar
                 {
                     return;
                 }
+                var worker = steps.First.Value.Unit;
+                var mine = steps.Last.Value;
+
+                steps.RemoveFirst();
+                while (worker.Moves > 0 && steps.Count > 0)
+                {
+                    worker.Move(steps.First());
+                    steps.RemoveFirst();
+                }
 
                 var worker = moveTuple.Item1;
                 var mine = moveTuple.Item2;
@@ -231,7 +240,7 @@ namespace Joueur.cs.Games.Necrowar
                 default:
                     break;
             }
-            
+
             score += unit.Job.Health - unit.Health;
 
             return score;
@@ -275,5 +284,65 @@ namespace Joueur.cs.Games.Necrowar
             }
             return unitJ != AI.WRAITH;
         }
+
+        public static Tuple<TowerJob, Tile> DesiredTowerJob()
+        {
+            const float Ratio = 0.5f;
+
+            var num_zombies = AI.THEM.Units.Where(u => u.Job == AI.ZOMBIE).Count();
+            var num_ghoul = AI.THEM.Units.Where(u => u.Job == AI.GHOUL).Count();
+            var num_abomination = AI.THEM.Units.Where(u => u.Job == AI.ABOMINATION).Count();
+            var num_hound = AI.THEM.Units.Where(u => u.Job == AI.HOUND).Count();
+            var num_wraith = AI.THEM.Units.Where(u => u.Job == AI.WRAITH).Count();
+            var num_horseman = AI.THEM.Units.Where(u => u.Job == AI.HORSEMAN).Count();
+            var num_total = AI.THEM.Units.Count();
+
+            if (num_wraith > 0 && AI.US.Towers.Where(t => t.Job == AI.CLEANSING).Count() == 0)
+            {
+                if (AI.CLEANSING_BUILD_TILES.Count() > 0)
+                {
+                    return new Tuple<TowerJob, Tile>(AI.CLEANSING, AI.CLEANSING_BUILD_TILES.Peek());
+                }
+            }
+            if (num_ghoul + num_zombies + num_hound > (num_total * Ratio) && num_total > 5)
+            {
+                if (AI.AOE_BUILD_TILES.Count() > 0)
+                {
+                    return new Tuple<TowerJob, Tile>(AI.AOE, AI.AOE_BUILD_TILES.Peek());
+                }
+            }
+
+            if (AI.AOE_BUILD_TILES.Count() > 0)
+            {
+                return new Tuple<TowerJob, Tile>(AI.CLEANSING, AI.ARROW_BUILD_TILES.Peek());
+            }
+            else
+            {
+                return null;
+            }
+            
+
+            /////////////////////////////////////////////////////////////////////////////
+            //This is an abomination
+            /////////////////////////////////////////////////////////////////////////////
+            /*
+            if ( num_abomination > 1 && AI.US.Towers.Where(t => t.Job == AI.BALLISTA).Count() == 0 )
+            {
+                var Opponents_Abominations = AI.THEM.Units.Where(u => u.Job == AI.ABOMINATION);
+                var Closest_Abomination = Opponents_Abominations.MinByValue(u => ManhattanDistance(u.Tile.X, AI.CASTLE_TOWER.Tile.X, u.Tile.Y, AI.CASTLE_TOWER.Tile.Y));
+                if (turnsLeft(Closest_Abomination, AI.CASTLE_TOWER.Tile) < 10)
+                {
+
+                }
+            }
+            */
+        }
+
+        public static int turnsLeft(Unit unit, Tile destination)
+        {
+            int distance = ManhattanDistance(unit.Tile.X, destination.X, unit.Tile.Y, destination.Y);
+            return distance / unit.Job.Moves;
+        }
     }
+
 }

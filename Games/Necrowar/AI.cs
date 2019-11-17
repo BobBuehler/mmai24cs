@@ -47,6 +47,8 @@ namespace Joueur.cs.Games.Necrowar
         public static TowerJob ARROW;
         public static TowerJob AOE;
 
+        public static Tower CASTLE_TOWER;
+
         public static UnitJob WORKER;
         public static UnitJob ZOMBIE;
         public static UnitJob GHOUL;
@@ -59,7 +61,12 @@ namespace Joueur.cs.Games.Necrowar
         public static Tower THEIR_CASTLE;
 
         public static IEnumerable<Tile> GOLD_MINES;
+        public static IEnumerable<Tile> ISLAND_GOLD_MINES;
         public static HashSet<Tile> RIVER_NEIGHBORS;
+
+        public static Queue<Tile> CLEANSING_BUILD_TILES;
+        public static Queue<Tile> ARROW_BUILD_TILES;
+        public static Queue<Tile> AOE_BUILD_TILES;
 
         static Dictionary<Tile, List<Tower>> towerRanges = new Dictionary<Tile, List<Tower>>();
         #region Methods
@@ -110,7 +117,37 @@ namespace Joueur.cs.Games.Necrowar
             AI.THEIR_CASTLE = AI.THEM.Towers.First(t => t.Job == AI.CASTLE);
 
             AI.GOLD_MINES = AI.GAME.Tiles.Where(t => t.IsGoldMine && t.Owner == AI.US);
+            AI.ISLAND_GOLD_MINES = AI.GAME.Tiles.Where(t => t.IsIslandGoldMine);
             AI.RIVER_NEIGHBORS = new HashSet<Tile>(AI.GAME.Tiles.Where(t => t.IsRiver).SelectMany(t => t.GetNeighbors()).Where(t => t.IsGrass));
+
+            AI.CASTLE_TOWER = AI.US.Towers.First(t => t.Job == AI.CASTLE);
+
+            AI.CLEANSING_BUILD_TILES = new Queue<Tile>();
+            AI.ARROW_BUILD_TILES = new Queue<Tile>();
+            AI.AOE_BUILD_TILES = new Queue<Tile>();
+
+            if (AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.IsPath)
+            {
+                AI.CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
+                AI.CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
+
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileEast.TileEast);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileWest.TileWest);
+
+                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileWest.TileWest);
+                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileEast.TileEast);
+            }
+            else
+            {
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
+                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
+
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileWest.TileWest);
+                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileEast.TileEast);
+
+                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileEast.TileEast);
+                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileWest.TileWest);
+            }
 
             // <<-- /Creer-Merge: start -->>
         }
@@ -189,18 +226,21 @@ namespace Joueur.cs.Games.Necrowar
 
         public void workers()
         {
-            if (AI.US.Units.Count(u => u.Job == AI.WORKER) <= 4 && Solver.CanAfford(AI.US, AI.WORKER))
+            if (AI.US.Units.Count(u => u.Job == AI.WORKER) <= 6 && Solver.CanAfford(AI.US, AI.WORKER))
             {
                 AI.WORKER_SPAWNER.SpawnWorker();
             }
 
-            var goldCounts = new int[] { 1, 2, 2, 3, 3, 4, 5, 5, 6 };
+            var goldCounts = new int[] { 0, 0, 1, 1, 2, 2, 3, 4, 4, 5 };
+            var islandGoldCounts = new int[] { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
             var workers = AI.US.Units.Where(u => u.Job == AI.WORKER);
             var workerCount = workers.Count();
             var goldCount = goldCounts[workerCount];
-            var fishCount = workerCount - goldCount;
+            var islandGoldCount = islandGoldCounts[workerCount];
+            var fishCount = workerCount - (goldCount +islandGoldCount);
 
-            Solver.MoveAndMine(workers, AI.GOLD_MINES, goldCount);
+            Solver.MoveAndMine(workers, AI.ISLAND_GOLD_MINES, islandGoldCount);
+            Solver.MoveAndMine(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), AI.GOLD_MINES, goldCount);
             Solver.MoveAndFish(workers.Where(w => !w.Acted && w.Moves == AI.WORKER.Moves), fishCount);
         }
 
