@@ -64,10 +64,9 @@ namespace Joueur.cs.Games.Necrowar
         public static HashSet<Tile> ISLAND_GOLD_MINES;
         public static HashSet<Tile> RIVER_NEIGHBORS;
 
-        public static Queue<Tile> CLEANSING_BUILD_TILES;
-        public static Queue<Tile> ARROW_BUILD_TILES;
-        public static Queue<Tile> AOE_BUILD_TILES;
-        public static HashSet<Tile> DEFENSE_TILES;
+        public static List<Tile> LEFT_TOWERS;
+        public static List<Tile> RIGHT_TOWERS;
+        public static List<TowerJob> TOWER_PATTERN;
 
         static Dictionary<Tile, List<Tower>> towerRanges = new Dictionary<Tile, List<Tower>>();
         #region Methods
@@ -123,52 +122,25 @@ namespace Joueur.cs.Games.Necrowar
 
             AI.CASTLE_TOWER = AI.US.Towers.First(t => t.Job == AI.CASTLE);
 
-            AI.CLEANSING_BUILD_TILES = new Queue<Tile>();
-            AI.ARROW_BUILD_TILES = new Queue<Tile>();
-            AI.AOE_BUILD_TILES = new Queue<Tile>();
-
-            if (AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.IsPath)
+            var castleTile = AI.CASTLE_TOWER.Tile;
+            if (castleTile.TileNorth.TileNorth.IsPath)
             {
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileWest);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
-
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileEast.TileEast);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileWest.TileWest);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileWest);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileWest);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileNorth.TileEast.TileEast);
-
-                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileWest.TileWest);
-                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileEast.TileEast);
+                var leftX = castleTile.X - 1;
+                var rightX = castleTile.X + 2;
+                var startY = castleTile.Y - 3;
+                AI.LEFT_TOWERS = Enumerable.Range(0, 15).Select(o => AI.GAME.GetTileAt(leftX, startY - o)).ToList();
+                AI.RIGHT_TOWERS = Enumerable.Range(0, 15).Select(o => AI.GAME.GetTileAt(rightX, startY - o)).ToList();
             }
             else
             {
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileEast);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileEast);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileEast);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
-                CLEANSING_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileNorth.TileWest);
-
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileWest.TileWest);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileEast.TileEast);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileEast);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileEast);
-                ARROW_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileSouth.TileWest.TileWest);
-
-                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileSouth.TileEast.TileEast);
-                AOE_BUILD_TILES.Enqueue(AI.CASTLE_TOWER.Tile.TileNorth.TileWest.TileWest);
+                var leftX = castleTile.X - 2;
+                var rightX = castleTile.X + 1;
+                var startY = castleTile.Y + 3;
+                AI.LEFT_TOWERS = Enumerable.Range(0, 15).Select(o => AI.GAME.GetTileAt(leftX, startY + o)).ToList();
+                AI.RIGHT_TOWERS = Enumerable.Range(0, 15).Select(o => AI.GAME.GetTileAt(rightX, startY + o)).ToList();
             }
 
-            var astar = new AStar<Tile>(AI.OUR_CASTLE.Tile.ToEnumerable(), t => false, (t1, t2) => 1, t => 0, t => t.GetNeighbors().Where(n => n.IsPath));
-            AI.DEFENSE_TILES = new HashSet<Tile>(astar.GScore.Keys.Where(t => Solver.ManhattanDistance(t, AI.OUR_CASTLE.Tile) > 2).SelectMany(t => t.GetNeighbors()).Where(t => !t.IsPath));
-            Console.WriteLine(String.Join(",", AI.DEFENSE_TILES.Select(d => String.Format("({0},{1})", d.X, d.Y))));
+            AI.TOWER_PATTERN = new List<TowerJob>() { AI.CLEANSING, AI.AOE, AI.ARROW };
 
             // <<-- /Creer-Merge: start -->>
         }
@@ -225,9 +197,12 @@ namespace Joueur.cs.Games.Necrowar
 
             // this.workers();
 
-            // this.attackers();
 
-            this.makeTowers();
+            this.farmers();
+
+            this.builders();
+
+            // this.attackers();
 
             this.towers();
 
@@ -235,68 +210,117 @@ namespace Joueur.cs.Games.Necrowar
             // <<-- /Creer-Merge: runTurn -->>
         }
 
-        public void makeTowers()
+        public void farmers()
         {
             if (AI.US.Units.Count(u => u.Job == AI.WORKER) < 13)
             {
                 while (Solver.CanAfford(AI.US, AI.WORKER) && AI.US.Units.Count(u => u.Job == AI.WORKER) < 13)
                 {
                     AI.WORKER_SPAWNER.SpawnWorker();
-                    Solver.MoveAndFish(AI.WORKER_SPAWNER.Unit.ToEnumerable(), 1);
-                }
-            }
-            Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.ISLAND_GOLD_MINES, 3);
-            Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.GOLD_MINES, 4);
-            Solver.MoveAndFish(AI.US.Units.Where(u => u.Job == AI.WORKER), 4);
-
-            var builder = AI.US.Units.FirstOrDefault(u => u.Job == AI.WORKER && u.Moves > 0 && u.Acted == false);
-            if (builder == null)
-            {
-                return;
-            }
-
-            TowerJob nextTowerJob = null;
-            var wraithCount = AI.THEM.Units.Count(u => u.Job == AI.WRAITH);
-            var cleansingCount = AI.US.Towers.Count(t => t.Job == AI.CLEANSING);
-            if (wraithCount > cleansingCount && cleansingCount < AI.CLEANSING_BUILD_TILES.Count)
-            {
-                nextTowerJob = AI.CLEANSING;
-            }
-            else
-            {
-                var houndCount = AI.THEM.Units.Count(u => u.Job == AI.HOUND);
-                var aoeCount = AI.US.Towers.Count(t => t.Job == AI.AOE);
-                if (houndCount > aoeCount * 2 && aoeCount < AI.AOE_BUILD_TILES.Count)
-                {
-                    nextTowerJob = AI.AOE;
-                }
-                else
-                {
-                    var arrowCount = AI.US.Towers.Count(t => t.Job == AI.ARROW);
-                    if (arrowCount < AI.THEM.Units.Count(u => Solver.canAttackJob(AI.ARROW, u.Job)) && arrowCount < AI.ARROW_BUILD_TILES.Count)
+                    Solver.MoveAndMine(AI.WORKER_SPAWNER.Unit.ToEnumerable(), AI.GOLD_MINES, 4);
+                    if (AI.WORKER_SPAWNER.Unit != null)
                     {
-                        nextTowerJob = AI.ARROW;
+                        Solver.MoveAndFish(AI.WORKER_SPAWNER.Unit.ToEnumerable(), 1);
                     }
                 }
             }
 
-            if (nextTowerJob == null)
-            {
-                nextTowerJob = new TowerJob[] { AI.ARROW, AI.CLEANSING, AI.AOE }.MinByValue(j => AI.US.Towers.Count(t => t.Job == j));
-            }
 
-            var towerTiles = AI.DEFENSE_TILES.Where(t => !t.IsPath && t.Tower == null && !t.getTilesInRange().Any(r => r.Tower != null && r.Tower.Job == nextTowerJob));
-            if (!towerTiles.Any())
+
+            if (AI.GAME.RiverPhase - (AI.GAME.CurrentTurn % AI.GAME.RiverPhase) >= 2)
+            {
+                Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.ISLAND_GOLD_MINES, 3);
+                Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.GOLD_MINES, 4);
+                Solver.MoveAndFish(AI.US.Units.Where(u => u.Job == AI.WORKER), 4);
+            }
+            else
+            {
+                Solver.MoveAndMine(AI.US.Units.Where(u => u.Job == AI.WORKER), AI.GOLD_MINES, 4);
+                Solver.MoveAndFish(AI.US.Units.Where(u => u.Job == AI.WORKER), 7);
+            }
+        }
+
+        public void builders()
+        {
+            var availableWorkers = AI.US.Units.Where(u => u.Job == AI.WORKER && u.Moves > 0 && u.Acted == false);
+            if (!availableWorkers.Any())
             {
                 return;
             }
 
-            var nextTile = towerTiles.MinByValue(t => Solver.ManhattanDistance(t, AI.OUR_CASTLE.Tile));
-
-            Solver.MoveNearest(builder.ToEnumerable(), nextTile.ToEnumerable(), AI.WORKER);
-            if (builder.Tile == nextTile && Solver.CanAfford(AI.US, nextTowerJob))
+            var leftIndex = AI.LEFT_TOWERS.FindIndex(t => t.Tower == null);
+            var rightIndex = AI.RIGHT_TOWERS.FindIndex(t => t.Tower == null);
+            Tile targetTile1 = null;
+            Tile targetTile2 = null;
+            if (leftIndex >= 0)
             {
-                builder.Build(nextTowerJob.Title);
+                if (rightIndex >= 0)
+                {
+                    if (leftIndex <= rightIndex)
+                    {
+                        targetTile1 = AI.LEFT_TOWERS[leftIndex];
+                        targetTile2 = AI.RIGHT_TOWERS[rightIndex];
+                    }
+                    else
+                    {
+                        targetTile1 = AI.RIGHT_TOWERS[rightIndex];
+                        targetTile2 = AI.LEFT_TOWERS[leftIndex];
+                    }
+                }
+                else
+                {
+                    targetTile1 = AI.LEFT_TOWERS[leftIndex];
+                }
+            }
+            else if (rightIndex >= 0)
+            {
+                targetTile1 = AI.RIGHT_TOWERS[rightIndex];
+            }
+
+            if (targetTile1 == null)
+            {
+                return;
+            }
+
+            var moved = Solver.MoveNearest(availableWorkers, targetTile1.ToEnumerable(), AI.WORKER);
+            if (moved == null)
+            {
+                return;
+            }
+
+            var builder = moved.Item1;
+            var tile = moved.Item2;
+
+            if (builder.Tile == tile)
+            {
+                var towerJob = AI.TOWER_PATTERN[Math.Abs(tile.Y - AI.LEFT_TOWERS[0].Y) % AI.TOWER_PATTERN.Count];
+                if (Solver.CanAfford(builder.Owner, towerJob))
+                {
+                    builder.Build(towerJob.Title);
+                }
+            }
+
+            if (targetTile2 == null)
+            {
+                return;
+            }
+            availableWorkers = availableWorkers.Where(u => u != builder);
+            moved = Solver.MoveNearest(availableWorkers, targetTile2.ToEnumerable(), AI.WORKER);
+            if (moved == null)
+            {
+                return;
+            }
+
+            builder = moved.Item1;
+            tile = moved.Item2;
+
+            if (builder.Tile == tile)
+            {
+                var tower = AI.TOWER_PATTERN[Math.Abs(tile.Y - AI.LEFT_TOWERS[0].Y) % AI.TOWER_PATTERN.Count];
+                if (Solver.CanAfford(builder.Owner, tower))
+                {
+                    builder.Build(tower.Title);
+                }
             }
         }
 
