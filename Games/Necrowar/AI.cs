@@ -144,12 +144,21 @@ namespace Joueur.cs.Games.Necrowar
             AI.TOWER_PATTERN = new List<TowerJob>() { AI.CLEANSING, AI.AOE, AI.ARROW };
 
             string[] pattern;
-            switch (new Random().Next(0, 2))
+            switch (new Random().Next(0, 5))
             {
                 case 0:
                     pattern = new[] { "0110110", "1001001", "1000001", "0100010", "0010100", "0001000" };
                     break;
                 case 1:
+                    pattern = new[] { "00111100", "01000010", "10100101", "10000001", "10100101", "10011001", "01000010", "00100100" };
+                    break;
+                case 2:
+                    pattern = new[] { "01010", "10001", "11011", "01110", "00100", "00100", "00100" };
+                    break;
+                //case 3:
+                //  pattern = new[] { "00100000100", "00010001000", "00100000100", "00111111100", "01101110110", "11111111111", "10111111101", "10100000101", "00011011000" };
+                // break;
+                case 4:
                 default:
                     pattern = new[] { "01100", "00010", "00101", "01001", "10000" };
                     break;
