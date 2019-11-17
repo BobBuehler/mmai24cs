@@ -32,25 +32,35 @@ namespace Joueur.cs.Games.Necrowar
             }
         }
 
-        public static void Move(Unit unit, IEnumerable<Tile> targets)
+        public static Tuple<Unit, Tile> MoveNearest(IEnumerable<Unit> units, IEnumerable<Tile> targets, UnitJob job)
         {
-            if (unit.Acted || unit.Moves == 0)
+            var movable = units.Where(u => !u.Acted && u.Moves > 0);
+            if (!movable.Any())
             {
-                return;
+                return null;
             }
 
-            var steps = FindPath(unit.Tile.ToEnumerable(), targets, t => CanPath(unit.Job, unit.Owner, t));
+            var steps = FindPath(movable.Select(u => u.Tile), targets, t => CanPath(job, AI.US, t));
             if (steps.Count == 0)
             {
-                return;
+                steps = FindPath(movable.Select(u => u.Tile), targets, t => CanPath(job, AI.US, t, true));
+                if (steps.Count == 0)
+                {
+                    return null;
+                }
             }
-            steps.RemoveFirst();
 
-            while (unit.Moves > 0 && steps.Count > 0)
+            var moverTile = steps.First();
+            var mover = units.First(u => u.Tile == moverTile);
+            var target = steps.Last();
+            steps.RemoveFirst();
+            while (mover.Moves > 0 && steps.Count > 0 && CanPath(job, AI.US, steps.First()))
             {
-                unit.Move(steps.First());
+                mover.Move(steps.First());
                 steps.RemoveFirst();
             }
+
+            return Tuple.Create(mover, target);
         }
 
         public static void Attack(Unit unit, Tower tower)
@@ -68,13 +78,13 @@ namespace Joueur.cs.Games.Necrowar
             return player.Gold >= job.GoldCost && player.Mana >= job.ManaCost;
         }
 
-        public static bool CanPath(UnitJob job, Player player, Tile tile)
+        public static bool CanPath(UnitJob job, Player player, Tile tile, bool ignoreUnits = false)
         {
             if (job == AI.WORKER)
             {
-                return tile.Unit == null && tile.IsGrass && tile.Owner != player.Opponent;
+                return (ignoreUnits || tile.Unit == null) && tile.IsGrass && tile.Owner != player.Opponent;
             }
-            return tile.IsPath && (tile.Unit == null || (tile.Unit.Job == job && tile.NumUnits(job) < job.PerTile));
+            return tile.IsPath && (ignoreUnits || tile.Unit == null || (tile.Unit.Job == job && tile.NumUnits(job) < job.PerTile));
         }
 
         public static LinkedList<Tile> FindPath(IEnumerable<Tile> starts, IEnumerable<Tile> goals, Func<Tile, bool> isPathable)
@@ -92,20 +102,14 @@ namespace Joueur.cs.Games.Necrowar
 
             while (workerSet.Count > 0 && mineSet.Count > 0 && remaining > 0)
             {
-                var steps = FindPath(workerSet.Select(w => w.Tile), mineSet, t => Solver.CanPath(AI.WORKER, AI.US, t));
-                if (steps.Count == 0)
+                var moveTuple = MoveNearest(workerSet, mineSet, AI.WORKER);
+                if (moveTuple == null)
                 {
-                    break;
+                    return;
                 }
-                var worker = steps.First.Value.Unit;
-                var mine = steps.Last.Value;
-                
-                steps.RemoveFirst();
-                while (worker.Moves > 0 && steps.Count > 0)
-                {
-                    worker.Move(steps.First());
-                    steps.RemoveFirst();
-                }
+
+                var worker = moveTuple.Item1;
+                var mine = moveTuple.Item2;
 
                 if (worker.Tile == mine)
                 {
@@ -126,20 +130,14 @@ namespace Joueur.cs.Games.Necrowar
 
             while (workerSet.Count > 0 && fishingSet.Count > 0 && remaining > 0)
             {
-                var steps = FindPath(workerSet.Select(w => w.Tile), fishingSet, t => Solver.CanPath(AI.WORKER, AI.US, t));
-                if (steps.Count == 0)
+                var moveTuple = MoveNearest(workerSet, fishingSet, AI.WORKER);
+                if (moveTuple == null)
                 {
-                    break;
+                    return;
                 }
-                var worker = steps.First.Value.Unit;
-                var fishingSpot = steps.Last.Value;
 
-                steps.RemoveFirst();
-                while (worker.Moves > 0 && steps.Count > 0)
-                {
-                    worker.Move(steps.First());
-                    steps.RemoveFirst();
-                }
+                var worker = moveTuple.Item1;
+                var fishingSpot = moveTuple.Item2;
 
                 if (fishingSet.Contains(worker.Tile))
                 {
